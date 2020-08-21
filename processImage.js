@@ -31,10 +31,12 @@ document.getElementById("detectButton").onclick = function () {
   // load or load fresh
   loadImageToCanvas();
 
-  // // load the image, make gray + blur
+  // load the image, make gray + blur
   let srcMat = prepImage();
   // Transform the image to be as square as possible
-  let squaredMat = fourPointTransform(srcMat); // NOTE: might throw
+  let warped = fourPointTransform(srcMat); // NOTE: might throw
+  // turn to black or white binary
+  let blackOrWhite = applyOtsuThresh(warped);
 
   // Working todo list:
   // find contours in a thresholded image,
@@ -46,7 +48,7 @@ document.getElementById("detectButton").onclick = function () {
   // - check out star examples here: https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
 
   // add display in canvas
-  cv.imshow("imageCanvas", squaredMat);
+  cv.imshow("imageCanvas", blackOrWhite);
 
   // re-enable button, hide loader
   this.disabled = false;
@@ -228,4 +230,12 @@ const fourPointTransform = (srcMat) => {
   );
 
   return contMat;
+};
+
+const applyOtsuThresh = (src) => {
+  // https://docs.opencv.org/master/d7/dd0/tutorial_js_thresholding.html
+  let thresh = new cv.Mat();
+  cv.threshold(src, thresh, 0, 255, cv.THRESH_OTSU);
+
+  return thresh;
 };
