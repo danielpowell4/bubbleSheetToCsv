@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <title>Private Prep Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="en_US" />
+
+    <link rel="stylesheet" type="text/css" href="/styles.css" />
+  </head>
+
+  <body>
+    <!-- spinner for loading opencv.js + processing -->
+    <div class="modal"></div>
+
+    <div class="container">
+      <!-- accept and display an image -->
+      <div class="grid">
+        <input id="imageInput" type="file" name="file" />
+        <button type="button" id="detectButton" class="btn btn-primary">
+          Transform
+        </button>
+      </div>
+
+      <div class="grid">
+        <img id="imageOriginal" alt="No Image" />
+        <canvas id="imageCanvas"></canvas>
+      </div>
+    </div>
+
+    <script src="https://docs.opencv.org/master/opencv.js"></script>
+    <script src="./processImage.js"></script>
+  </body>
+</html>
