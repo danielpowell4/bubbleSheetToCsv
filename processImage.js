@@ -21,6 +21,12 @@ let loadImageToCanvas = function () {
 
 imgElement.onload = loadImageToCanvas;
 
+// setup colors
+const white = new cv.Scalar(255, 255, 255);
+const red = new cv.Scalar(255, 0, 0);
+const green = new cv.Scalar(0, 255, 0);
+const blue = new cv.Scalar(0, 0, 255);
+
 // on button click, detect -> display circles
 
 document.getElementById("detectButton").onclick = function () {
@@ -37,18 +43,17 @@ document.getElementById("detectButton").onclick = function () {
   let warped = fourPointTransform(srcMat); // NOTE: might throw
   // turn to black or white binary
   let blackOrWhite = applyOtsuThresh(warped);
+  // grab circles
+  let circleMat = detectCircles(blackOrWhite);
 
   // Working todo list:
-  // find contours in a thresholded image,
-  // initialize the list of contours that correspond to questions
-  // ... loop?
+  // have detectCircles
+  //  - group circles into question clusters
+  //  - cast an answer based on darkest color
+  // figure out question number
 
-  // - return its position in group
-  // - determine the question number (?)
-  // - check out star examples here: https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
-
-  // add display in canvas
-  cv.imshow("imageCanvas", blackOrWhite);
+  // show the magic
+  cv.imshow("imageCanvas", circleMat);
 
   // re-enable button, hide loader
   this.disabled = false;
@@ -238,4 +243,83 @@ const applyOtsuThresh = (src) => {
   cv.threshold(src, thresh, 0, 255, cv.THRESH_OTSU);
 
   return thresh;
+};
+
+const detectCircles = (mat) => {
+  let src = mat.clone();
+  let output = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  cv.findContours(
+    src,
+    contours,
+    hierarchy,
+    cv.RETR_CCOMP,
+    cv.CHAIN_APPROX_SIMPLE
+  );
+
+  // Get area for all contours so we can find the biggest
+  let potentialBubbles = [];
+  for (let i = 0; i < contours.size(); i++) {
+    let c = contours.get(i);
+    let { height, width } = cv.boundingRect(c); // also returns x, y
+    let aspectRatio = width / height;
+
+    // in order to label the contour as a question, region
+    // should be sufficiently wide, sufficiently tall, and
+    // have an aspect ratio approximately equal to 1
+    if (
+      width >= 20 &&
+      height >= 20 &&
+      aspectRatio >= 0.9 &&
+      aspectRatio <= 1.1
+    ) {
+      potentialBubbles.push(c);
+    }
+  }
+
+  // reduce any overlaps to the biggest
+  let bubbleOutlines = potentialBubbles.reduce((collection, current) => {
+    let currentRect = cv.boundingRect(current);
+
+    let overlapping = collection.find((other) => {
+      let otherRect = cv.boundingRect(other);
+
+      return (
+        currentRect.x < otherRect.x + otherRect.width &&
+        currentRect.x + currentRect.width > otherRect.x &&
+        currentRect.y < otherRect.y + otherRect.height &&
+        currentRect.height + currentRect.y > otherRect.y
+      );
+    });
+
+    if (!overlapping) {
+      collection.push(current);
+    } else {
+      let currentArea = currentRect.width * currentRect.height;
+      let otherArea = overlapping.width * overlapping.height;
+
+      if (currentArea > otherArea) {
+        otherIndex = collection.indexOf(overlapping);
+        collection[otherIndex] = current;
+      }
+    }
+
+    return collection;
+  }, []);
+
+  // TODO: cluster circles into rows
+  // ...
+
+  // TODO: decide an answer
+  // ...
+
+  // paint all bubbles to image
+  // see from https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
+  for (let bubble of bubbleOutlines) {
+    let circle = cv.minEnclosingCircle(bubble);
+    cv.circle(output, circle.center, circle.radius, blue, 2, cv.LINE_AA, 0);
+  }
+
+  return output;
 };
