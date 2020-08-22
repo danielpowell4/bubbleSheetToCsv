@@ -2,7 +2,7 @@
 
 Currently a WIP.
 
-Goal is to detect
+Goal is to detect bubbles, cast answers and export a JSON blob or CSV
 
 Based on [pyimagesearch](https://www.pyimagesearch.com/2016/10/03/bubble-sheet-multiple-choice-scanner-and-test-grader-using-omr-python-and-opencv/) and other things around the web
 
