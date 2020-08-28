@@ -311,12 +311,6 @@ const detectCircles = (mat) => {
   // sort top then left
   bubbleOutlines = sortContours(bubbleOutlines);
 
-  // TODO: cluster circles into rows
-  // ...
-
-  // TODO: decide an answer
-  // ...
-
   // paint all bubbles to image
   // see from https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
   for (let i = 0, length = bubbleOutlines.length; i < length; i++) {
@@ -332,6 +326,36 @@ const detectCircles = (mat) => {
     const bubbleLabel = `${i + 1}`;
     cv.putText(output, bubbleLabel, textCenter, 1, 1, blue);
   }
+
+  // cluster circles into rows
+  const optionCount = 5; // TODO: make me property/arg ..?
+  const questions = groupToQuestions(bubbleOutlines, optionCount);
+
+  // loop through rows, paint outline, label
+  for (let i = 0, length = questions.length; i < length; i++) {
+    const questionGroup = questions[i];
+    const firstCnt = questionGroup[0];
+    const lastCnt = questionGroup[optionCount - 1];
+    const firstBubble = cv.boundingRect(firstCnt);
+    const lastBubble = cv.boundingRect(lastCnt);
+
+    let point1 = new cv.Point(firstBubble.x, firstBubble.y);
+    let point2 = new cv.Point(
+      lastBubble.x + lastBubble.width,
+      lastBubble.y + lastBubble.height
+    );
+    cv.rectangle(output, point1, point2, red, 2, cv.LINE_AA, 0);
+
+    const textCenter = {
+      x: firstBubble.x - 30,
+      y: firstBubble.y + firstBubble.height / 2 + 5,
+    };
+    const qNum = `Q${i + 1}`; // make me smarter?
+    cv.putText(output, qNum, textCenter, 1, 1, red);
+  }
+
+  // TODO: decide an answer
+  // ...
 
   return output;
 };
@@ -352,4 +376,18 @@ const sortContours = (contours) => {
       if (aRect.x > bRect.x) return 1;
     })
     .map(([c, _rect]) => c);
+};
+
+// takes sorted array of bubbles
+const chunkArray = (array, size) => {
+  if (array.length <= size) {
+    return [array];
+  }
+  return [array.slice(0, size), ...chunkArray(array.slice(size), size)];
+};
+
+const groupToQuestions = (outlines, optionCount) => {
+  // TODO: knock out outliers w /out group
+  const questions = chunkArray(outlines, optionCount);
+  return questions;
 };
