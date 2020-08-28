@@ -336,6 +336,9 @@ const detectCircles = (mat) => {
     const questionGroup = questions[i];
     const firstCnt = questionGroup[0];
     const lastCnt = questionGroup[optionCount - 1];
+    if (!lastCnt) {
+      throw `questionGroup i=${i} is the victim of a previous (not enough bubbles for question)`;
+    }
     const firstBubble = cv.boundingRect(firstCnt);
     const lastBubble = cv.boundingRect(lastCnt);
 
