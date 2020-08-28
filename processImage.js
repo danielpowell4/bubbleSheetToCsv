@@ -308,6 +308,9 @@ const detectCircles = (mat) => {
     return collection;
   }, []);
 
+  // sort top then left
+  bubbleOutlines = sortContours(bubbleOutlines);
+
   // TODO: cluster circles into rows
   // ...
 
@@ -331,4 +334,22 @@ const detectCircles = (mat) => {
   }
 
   return output;
+};
+
+const sortContours = (contours) => {
+  const BUFFER = 1.2; // because sizing not PERFECT
+
+  return contours
+    .map((c) => [c, cv.boundingRect(c)])
+    .sort((a, b) => {
+      const [, aRect] = a;
+      const [, bRect] = b;
+
+      if (BUFFER * aRect.y < bRect.y) return -1;
+      if (aRect.y > BUFFER * bRect.y) return 1;
+
+      if (aRect.x < bRect.x) return -1;
+      if (aRect.x > bRect.x) return 1;
+    })
+    .map(([c, _rect]) => c);
 };
