@@ -44,13 +44,14 @@ document.getElementById("detectButton").onclick = function () {
   // turn to black or white binary
   let blackOrWhite = applyOtsuThresh(warped);
   // grab circles
-  let circleMat = detectCircles(blackOrWhite);
+  let [circleMat, answers] = detectCircles(blackOrWhite);
+
+  console.log("answers", answers);
 
   // Working todo list:
   // have detectCircles
-  //  - group circles into question clusters
-  //  - cast an answer based on darkest color
-  // figure out question number
+  //  - discard outlier groups
+  // robustly figure out question number ..?
 
   // show the magic
   cv.imshow("imageCanvas", circleMat);
@@ -311,6 +312,7 @@ const detectCircles = (mat) => {
   // sort top then left
   bubbleOutlines = sortContours(bubbleOutlines);
 
+  // DEV HELPER
   // paint all bubbles to image
   // see from https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
   for (let i = 0, length = bubbleOutlines.length; i < length; i++) {
@@ -329,8 +331,9 @@ const detectCircles = (mat) => {
 
   // cluster circles into rows
   const optionCount = 5; // TODO: make me property/arg ..?
-  const questions = groupToQuestions(bubbleOutlines, optionCount);
+  const questions = groupToQuestions(bubbleOutlines, optionCount); // TODO: discard outliers
 
+  // DEV HELPER
   // loop through rows, paint outline, label
   for (let i = 0, length = questions.length; i < length; i++) {
     const questionGroup = questions[i];
@@ -357,10 +360,64 @@ const detectCircles = (mat) => {
     cv.putText(output, qNum, textCenter, 1, 1, red);
   }
 
-  // TODO: decide an answer
-  // ...
+  // IN PROGRESS: decide an answer
+  let thresh = mat.clone();
+  let answers = [];
+  for (let i = 0, length = questions.length; i < length; i++) {
+    const questionGroup = questions[i];
+    let max;
 
-  return output;
+    for (let j = 0, optionCount = questionGroup.length; j < optionCount; j++) {
+      let choice = questionGroup[j]; // choice is a Mat
+
+      // cut out rectangle around choice
+      // as region of interest or 'roi'
+      let boundingRect = cv.boundingRect(choice);
+      let region = new cv.Mat();
+      let rect = new cv.Rect(
+        boundingRect.x,
+        boundingRect.y,
+        boundingRect.width,
+        boundingRect.height
+      );
+      region = thresh.roi(rect);
+      let total = cv.countNonZero(region); // Not ready... NEED TO APPLY a bit_and mask (see debug below)
+
+      if (!max || max[2] < total) {
+        max = [choice, j, total];
+      }
+
+      // Dan, YOU ARE HERE:
+      // need to apply a bit_and mask
+      // problem evident for Question 5 on images/test_03.png
+      if (i == 4) {
+        console.log("pos", j + 1);
+        console.log("region total", total);
+
+        // for 'help'
+        // see https://docs.opencv.org/master/dd/d4d/tutorial_js_image_arithmetics.html
+        // and https://stackoverflow.com/questions/44333605/what-does-bitwise-and-operator-exactly-do-in-opencv
+
+        // DEV HELPER: show area in play for roi
+        let point1 = new cv.Point(boundingRect.x, boundingRect.y);
+        let point2 = new cv.Point(
+          boundingRect.x + boundingRect.width,
+          boundingRect.y + boundingRect.height
+        );
+        cv.rectangle(output, point1, point2, red, 2, cv.LINE_AA, 0);
+      }
+    }
+
+    // DEV HELPER
+    // paint 'correct' bubble
+    let correct = cv.minEnclosingCircle(max[0]);
+    // paint circle outline
+    cv.circle(output, correct.center, correct.radius, green, 2, cv.LINE_AA, 0);
+
+    answers.push({ q: i + 1, answerPosition: max[1] + 1 });
+  }
+
+  return [output, answers];
 };
 
 const sortContours = (contours) => {
