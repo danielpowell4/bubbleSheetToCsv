@@ -316,9 +316,18 @@ const detectCircles = (mat) => {
 
   // paint all bubbles to image
   // see from https://docs.opencv.org/master/dc/dcf/tutorial_js_contour_features.html
-  for (let bubble of bubbleOutlines) {
+  for (let i = 0, length = bubbleOutlines.length; i < length; i++) {
+    let bubble = bubbleOutlines[i];
     let circle = cv.minEnclosingCircle(bubble);
+    // paint circle outline
     cv.circle(output, circle.center, circle.radius, blue, 2, cv.LINE_AA, 0);
+    // paint dev helping label
+    const textCenter =
+      i < 9 // single digit, less offset
+        ? { x: circle.center.x - 5, y: circle.center.y + 5 }
+        : { x: circle.center.x - 10, y: circle.center.y + 5 };
+    const bubbleLabel = `${i + 1}`;
+    cv.putText(output, bubbleLabel, textCenter, 1, 1, blue);
   }
 
   return output;
