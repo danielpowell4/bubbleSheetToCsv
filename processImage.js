@@ -373,15 +373,8 @@ const detectCircles = (mat) => {
       // cut out rectangle around choice
       // as region of interest or 'roi'
       let boundingRect = cv.boundingRect(choice);
-      let region = new cv.Mat();
-      let rect = new cv.Rect(
-        boundingRect.x,
-        boundingRect.y,
-        boundingRect.width,
-        boundingRect.height
-      );
-      region = thresh.roi(rect);
-      let total = cv.countNonZero(region); // Not ready... NEED TO APPLY a bit_and mask (see debug below)
+      let region = thresh.roi(boundingRect);
+      let total = cv.countNonZero(region); // Not ready... apply circle mask to cut ~20% out of rect
 
       if (!max || max[2] < total) {
         max = [choice, j, total];
