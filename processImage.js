@@ -20,14 +20,20 @@ let loadImageToCanvas = function (imageSrc) {
 // - add default image
 const defaultImages = [
   "test_01.png",
-  "test_02.png",
+  // "test_02.png", detection + sorting currently broken
   "test_03.png",
   "test_04.png",
   "test_05.png",
 ];
-const defaultImage =
-  defaultImages[Math.floor(Math.random() * defaultImages.length)];
-loadImageToCanvas("./images/" + defaultImage);
+const pickImage = function () {
+  return defaultImages[Math.floor(Math.random() * defaultImages.length)];
+};
+loadImageToCanvas("./images/" + pickImage());
+
+document.getElementById("newImageButton").onclick = function () {
+  loadImageToCanvas("./images/" + pickImage());
+};
+
 // - allow upload
 let inputElement = document.getElementById("imageInput");
 inputElement.addEventListener(
