@@ -48,7 +48,7 @@ const black = new cv.Scalar(0, 0, 0);
 
 // on button click, detect -> display circles
 
-document.getElementById("detectButton").onclick = function () {
+document.getElementById("gradeButton").onclick = function () {
   // disable button, show loader
   this.disabled = true;
   document.body.classList.add("loading");
@@ -64,8 +64,7 @@ document.getElementById("detectButton").onclick = function () {
   let blackOrWhite = applyOtsuThresh(warped);
   // grab circles
   let [circleMat, answers] = detectCircles(blackOrWhite);
-
-  console.log("answers", answers);
+  printAnswersToTable(answers);
 
   // Working todo list:
   // have detectCircles
@@ -78,6 +77,29 @@ document.getElementById("detectButton").onclick = function () {
   // re-enable button, hide loader
   this.disabled = false;
   document.body.classList.remove("loading");
+};
+
+// DOM output
+
+const printAnswersToTable = (answers, options = ["A", "B", "C", "D", "E"]) => {
+  const table = document.getElementById("answerTable");
+  const tbody = table.querySelector("tbody");
+
+  // clear any prev rows
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+  for (let answer of answers) {
+    let row = tbody.insertRow(answer.q - 1);
+    let cell1 = row.insertCell(0);
+    let cell2 = row.insertCell(1);
+    let cell3 = row.insertCell(2);
+
+    cell1.innerHTML = answer.q;
+    cell2.innerHTML = options[answer.answerPosition];
+    cell3.innerHTML = answer.answerPosition;
+  }
+
+  table.classList.remove("table--hidden"); // ensure shown
 };
 
 // 'utils'
@@ -448,7 +470,7 @@ const detectCircles = (mat) => {
     // paint circle outline
     cv.circle(output, correct.center, correct.radius, green, 2, cv.LINE_AA, 0);
 
-    answers.push({ q: i + 1, answerPosition: max[1] + 1 });
+    answers.push({ q: i + 1, answerPosition: max[1] });
 
     console.log("\nQ", i + 1);
     console.table(table);

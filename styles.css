@@ -40,4 +40,79 @@ body.loading .modal {
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  margin-top: 1rem;
+}
+
+/* .table */
+.table.table--hidden {
+  display: none;
+}
+
+.table {
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 0;
+}
+
+.table caption {
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  line-height: 20px;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid #ddd;
+}
+
+.table th {
+  font-weight: bold;
+}
+
+.table thead th {
+  vertical-align: bottom;
+}
+
+.table thead:first-child tr:first-child th,
+.table thead:first-child tr:first-child td {
+  border-top: 0;
+}
+
+.table tbody + tbody {
+  border-top: 2px solid #ddd;
+}
+
+.table th,
+.table td {
+  padding: 4px 5px;
+}
+
+@media (max-width: 480px) {
+  tr {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #ddd;
+    margin: 8px auto 0;
+    padding: 8px 0 0;
+  }
+
+  thead tr {
+    border-top: none;
+    padding: 0;
+  }
+
+  th,
+  td {
+    box-sizing: border-box;
+    border-top: none;
+    padding: 2px 8px;
+    width: 100% !important;
+  }
+}
+
+.table tbody > tr:nth-child(odd) > td,
+.table tbody > tr:nth-child(odd) > th {
+  background-color: #f9f9f9;
 }

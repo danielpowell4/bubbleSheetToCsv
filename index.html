@@ -18,14 +18,29 @@
       <!-- accept and display an image -->
       <div class="grid">
         <input id="imageInput" type="file" name="file" />
-        <button type="button" id="detectButton" class="btn btn-primary">
-          Transform
+        <button type="button" id="gradeButton" class="btn btn-primary">
+          Grade Sheet
         </button>
       </div>
 
       <div class="grid">
         <canvas id="canvasInput"></canvas>
-        <canvas id="canvasOutput"></canvas>
+        <div>
+          <table id="answerTable" class="table table--hidden">
+            <caption>
+              Answers
+            </caption>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Letter</th>
+                <th>Position</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <canvas id="canvasOutput"></canvas>
+        </div>
       </div>
     </div>
 
