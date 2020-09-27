@@ -1,25 +1,42 @@
-// file input -> img
-
-let inputElement = document.getElementById("imageInput");
-let imgElement = document.getElementById("imageOriginal");
-
-inputElement.addEventListener(
-  "change",
-  (e) => {
-    imgElement.src = URL.createObjectURL(e.target.files[0]);
-  },
-  false
-);
+// requires opencv.js to have loaded
 
 // image -> opencv -> canvas
 
-let mat;
-let loadImageToCanvas = function () {
-  mat = cv.imread(imgElement);
-  cv.imshow("imageCanvas", mat);
+let inputCanvas = document.getElementById("canvasInput");
+
+let loadImageToCanvas = function (imageSrc) {
+  let ctx = inputCanvas.getContext("2d");
+  let img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function () {
+    inputCanvas.width = img.width;
+    inputCanvas.height = img.height;
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+  };
+  img.src = imageSrc;
 };
 
-imgElement.onload = loadImageToCanvas;
+// file input -> img
+// - add default image
+const defaultImages = [
+  "test_01.png",
+  "test_02.png",
+  "test_03.png",
+  "test_04.png",
+  "test_05.png",
+];
+const defaultImage =
+  defaultImages[Math.floor(Math.random() * defaultImages.length)];
+loadImageToCanvas("./images/" + defaultImage);
+// - allow upload
+let inputElement = document.getElementById("imageInput");
+inputElement.addEventListener(
+  "change",
+  (e) => {
+    loadImageToCanvas(URL.createObjectURL(e.target.files[0]));
+  },
+  false
+);
 
 // setup colors
 const white = new cv.Scalar(255, 255, 255);
@@ -36,11 +53,11 @@ document.getElementById("detectButton").onclick = function () {
   this.disabled = true;
   document.body.classList.add("loading");
 
-  // load or load fresh
-  loadImageToCanvas();
+  let rawSrc = cv.imread("canvasInput");
+  cv.imshow("canvasOutput", rawSrc);
 
   // load the image, make gray + blur
-  let srcMat = prepImage();
+  let srcMat = prepImage(rawSrc.clone());
   // Transform the image to be as square as possible
   let warped = fourPointTransform(srcMat); // NOTE: might throw
   // turn to black or white binary
@@ -56,7 +73,7 @@ document.getElementById("detectButton").onclick = function () {
   // robustly figure out question number ..?
 
   // show the magic
-  cv.imshow("imageCanvas", circleMat);
+  cv.imshow("canvasOutput", circleMat);
 
   // re-enable button, hide loader
   this.disabled = false;
@@ -65,8 +82,7 @@ document.getElementById("detectButton").onclick = function () {
 
 // 'utils'
 
-const prepImage = () => {
-  const srcMat = cv.imread("imageCanvas"); // will be mutated
+const prepImage = (srcMat) => {
   // - convert it to grayscale
   cv.cvtColor(srcMat, srcMat, cv.COLOR_RGBA2GRAY);
   // - blur it slightly for smoothing
