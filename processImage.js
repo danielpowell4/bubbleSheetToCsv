@@ -26,6 +26,8 @@ const white = new cv.Scalar(255, 255, 255);
 const red = new cv.Scalar(255, 0, 0);
 const green = new cv.Scalar(0, 255, 0);
 const blue = new cv.Scalar(0, 0, 255);
+const yellow = new cv.Scalar(235, 229, 52);
+const black = new cv.Scalar(0, 0, 0);
 
 // on button click, detect -> display circles
 
@@ -363,9 +365,11 @@ const detectCircles = (mat) => {
   // IN PROGRESS: decide an answer
   let thresh = mat.clone();
   let answers = [];
+
   for (let i = 0, length = questions.length; i < length; i++) {
     const questionGroup = questions[i];
     let max;
+    let table = [];
 
     for (let j = 0, optionCount = questionGroup.length; j < optionCount; j++) {
       let choice = questionGroup[j]; // choice is a Mat
@@ -373,31 +377,52 @@ const detectCircles = (mat) => {
       // cut out rectangle around choice
       // as region of interest or 'roi'
       let boundingRect = cv.boundingRect(choice);
-      let region = thresh.roi(boundingRect);
-      let total = cv.countNonZero(region); // Not ready... apply circle mask to cut ~20% out of rect
+      // IDEA #1 -> use innerRect avoid border
+      // TODO: standardize size for all bubbles
+      let innerRect = new cv.Rect(
+        boundingRect.x + 5,
+        boundingRect.y + 5,
+        boundingRect.width - 10,
+        boundingRect.height - 10
+      );
+      let region = thresh.roi(innerRect); // must be a rect
 
-      if (!max || max[2] < total) {
-        max = [choice, j, total];
-      }
+      // DEV HELPER: Draw region boundary to output (for manual tweaks)
+      let point1 = new cv.Point(innerRect.x, innerRect.y);
+      let point2 = new cv.Point(
+        innerRect.x + innerRect.width,
+        innerRect.y + innerRect.height
+      );
+      cv.rectangle(output, point1, point2, red, 2, cv.LINE_AA, 0);
 
-      // Dan, YOU ARE HERE:
-      // need to apply a bit_and mask
-      // problem evident for Question 5 on images/test_03.png
-      if (i == 4) {
-        console.log("pos", j + 1);
-        console.log("region total", total);
+      // IDEA #2 -> create circle mask w/ bitwise_and
+      // per ~https://stackoverflow.com/questions/60118622/how-to-crop-circle-image-from-webcam-opencv-and-remove-background
+      // for background see https://stackoverflow.com/questions/44333605/what-does-bitwise-and-operator-exactly-do-in-opencv
+      let blackOnly = cv.Mat.zeros(region.rows, region.cols, cv.CV_8UC1);
+      let circleMask = blackOnly.clone();
+      let calculatedRadius = (region.rows + region.cols) / 4;
 
-        // for 'help'
-        // see https://docs.opencv.org/master/dd/d4d/tutorial_js_image_arithmetics.html
-        // and https://stackoverflow.com/questions/44333605/what-does-bitwise-and-operator-exactly-do-in-opencv
+      // DEV HELPER: draw circle to output
+      let boundingCircle = cv.minEnclosingCircle(choice);
+      cv.circle(output, boundingCircle.center, calculatedRadius, yellow, -1);
+      cv.circle(
+        circleMask,
+        { x: region.rows / 2, y: region.cols / 2 },
+        calculatedRadius, // use circle radius or correction factor?
+        white,
+        -1 // -1 => filled
+      );
 
-        // DEV HELPER: show area in play for roi
-        let point1 = new cv.Point(boundingRect.x, boundingRect.y);
-        let point2 = new cv.Point(
-          boundingRect.x + boundingRect.width,
-          boundingRect.y + boundingRect.height
-        );
-        cv.rectangle(output, point1, point2, red, 2, cv.LINE_AA, 0);
+      let whiteCircle = new cv.Mat();
+      cv.bitwise_and(region, region, whiteCircle, circleMask);
+
+      let regionCount = cv.countNonZero(region); // of the whole region
+      let circleCount = cv.countNonZero(whiteCircle); // of the circle only
+
+      table.push([["A", "B", "C", "D", "E"][j], regionCount, circleCount]);
+
+      if (!max || max[2] < circleCount) {
+        max = [choice, j, circleCount];
       }
     }
 
@@ -408,6 +433,9 @@ const detectCircles = (mat) => {
     cv.circle(output, correct.center, correct.radius, green, 2, cv.LINE_AA, 0);
 
     answers.push({ q: i + 1, answerPosition: max[1] + 1 });
+
+    console.log("\nQ", i + 1);
+    console.table(table);
   }
 
   return [output, answers];
