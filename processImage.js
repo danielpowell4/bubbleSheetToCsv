@@ -18,15 +18,19 @@ let loadImageToCanvas = function (imageSrc) {
 
 // file input -> img
 // - add default image
+// TODO: add back "test_02.png", detection + sorting currently broken
 const defaultImages = [
   "test_01.png",
-  // "test_02.png", detection + sorting currently broken
   "test_03.png",
   "test_04.png",
   "test_05.png",
 ];
+let __lastImage;
 const pickImage = function () {
-  return defaultImages[Math.floor(Math.random() * defaultImages.length)];
+  let collection = defaultImages.filter((src) => src !== __lastImage);
+  let image = collection[Math.floor(Math.random() * collection.length)];
+  __lastImage = image;
+  return image;
 };
 loadImageToCanvas("./images/" + pickImage());
 
