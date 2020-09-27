@@ -9,21 +9,26 @@ Based on [pyimagesearch](https://www.pyimagesearch.com/2016/10/03/bubble-sheet-m
 # Get Started
 
 - clone down repo
-- open the index.html sheet in a browser
+- cd on over
+- run `python -m SimpleHTTPServer 8000`
 - make edits to `/processImage.js`, refresh
 
 # Working TODO list:
 
 So far I’ve gotten:
+
 - [x] upload image file
 - [x] covert image to grey scale
 - [x] slight blur
 - [x] cut out piece of paper, transform to ideal rect
 - [x] detect circles
 - [x] reduce overlapping circles
-- [ ] cluster circles into question groups
-- [ ] cast each circle in group to darkness score
-- [ ] determine most bubbled based on ^^
-- [ ] paint chosen answer to canvas
-- [ ] determine the question number
+- [x] cluster circles into question groups
+- [x] cast each circle in group to darkness score
+- [x] determine most bubbled based on ^^
+- [x] paint chosen answer to canvas
+- [x] determine the question number (currently assumed)
+- [ ] ensure bubble sizing standardized
+- [ ] remove outliers in clustering
+- [ ] handle more complex sheets
 - [ ] … all the other things :laughing:
